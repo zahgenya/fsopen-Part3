@@ -50,6 +50,13 @@ app.get('/api/persons/:id', (request, response) => {
     }
 })
 
+app.get('/info', (request, response) => {
+    const peopleCount = Math.max(...persons.map(p => p.id))
+    const todayDate = new Date()
+    response.send(`<p>phonebook has info for ${peopleCount} people<br/>
+    ${todayDate}</p>`)
+})
+
 app.delete('/api/persons/:id', (request, response) => {
     const id = Number(request.params.id)
     persons = persons.filter(person => person.id !== id)
@@ -59,17 +66,31 @@ app.delete('/api/persons/:id', (request, response) => {
 
 const generateId = () => {
     const maxId = persons.length > 0
-      ? Math.max(...persons.map(p => p.id))
-      : 0
-    return maxId
+        ? Math.max(...persons.map(p => p.id))
+        : 0
+    return maxId + 1
 }
 
 app.post('/api/persons', (request, response) => {
     const body = request.body
 
-    if (!body.name) {
+    if (!body.name || !body.number) {
         return response.status(400).json({
             error: 'content missing'
+        })
+    }
+
+    const isNameFound = body.name && persons.some(
+        (person) => person.name && person.name?.toLowerCase() === body.name.toLowerCase()
+    )
+
+    const isNumberFound = body.number && persons.some(
+        (person) => person.number === body.number
+    )
+
+    if (isNameFound || isNumberFound || (isNameFound && isNumberFound)) {
+        return response.status(400).json({
+            error: 'name must be unique'
         })
     }
 
