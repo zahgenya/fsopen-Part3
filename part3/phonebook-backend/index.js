@@ -33,12 +33,18 @@ app.get('/', (request, response) => {
 })
 
 app.get('/api/persons', (request, response) => {
-    Person.find({}).then(person => {
-      response.status(200).json(person)
-    })
-  })
+    Person.find({})
+        .then(persons => {
+            console.log('Found persons:', persons)
+            response.status(200).json(persons)
+        })
+        .catch(err => {
+            console.log('Error:', err)
+            response.status(500).json({ error: 'Server error' })
+        })
+})
 
-  app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response) => {
     Person.findById(request.params.id)
         .then(person => {
             if (person) {
@@ -81,7 +87,7 @@ const generateId = async () => {
         .sort({ id: -1 })
         .limit(1)
         .then(persons => persons.length > 0 ? persons[0].id : 0)
-    
+
     return maxId + 1
 }
 

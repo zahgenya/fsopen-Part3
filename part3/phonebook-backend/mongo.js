@@ -29,6 +29,7 @@ const person = new Persons({
 })
 
 if (process.argv[3] === undefined && process.argv[4] === undefined) {
+    console.log("connecting to:", url)
     console.log("phonebook:")
     Persons.find({}).then(result => {
         result.forEach(person => {
