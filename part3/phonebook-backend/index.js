@@ -5,7 +5,7 @@ const cors = require('cors')
 const mongoose = require('mongoose')
 require('dotenv').config()
 
-const Person = require('./models/person')
+const Persons = require('./models/persons')
 
 const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'unknown endpoint' })
@@ -33,10 +33,10 @@ app.get('/', (request, response) => {
 })
 
 app.get('/api/persons', (request, response) => {
-    Person.find({})
-        .then(persons => {
-            console.log('Found persons:', persons)
-            response.status(200).json(persons)
+    Persons.find({})
+        .then(person => {
+            console.log('Found persons:', person)
+            response.status(200).json(person)
         })
         .catch(err => {
             console.log('Error:', err)
@@ -45,7 +45,7 @@ app.get('/api/persons', (request, response) => {
 })
 
 app.get('/api/persons/:id', (request, response) => {
-    Person.findById(request.params.id)
+    Persons.findById(request.params.id)
         .then(person => {
             if (person) {
                 response.json(person)
@@ -60,14 +60,14 @@ app.get('/api/persons/:id', (request, response) => {
 })
 
 app.get('/info', async (request, response) => {
-    const peopleCount = await Person.countDocuments({})
+    const peopleCount = await Persons.countDocuments({})
     const todayDate = new Date()
     response.send(`<p>phonebook has info for ${peopleCount} people<br/>
     ${todayDate}</p>`)
 });
 
 app.delete('/api/persons/:id', (request, response) => {
-    Person.findByIdAndRemove(request.params.id)
+    Persons.findByIdAndRemove(request.params.id)
         .then(result => {
             if (result) {
                 response.status(204).end()
@@ -83,7 +83,7 @@ app.delete('/api/persons/:id', (request, response) => {
 
 
 const generateId = async () => {
-    const maxId = await Person.find({})
+    const maxId = await Persons.find({})
         .sort({ id: -1 })
         .limit(1)
         .then(persons => persons.length > 0 ? persons[0].id : 0)
@@ -100,11 +100,11 @@ app.post('/api/persons', (request, response) => {
         })
     }
 
-    const isNameFound = body.name && Person.some(
+    const isNameFound = body.name && Persons.some(
         (person) => person.name && person.name?.toLowerCase() === body.name.toLowerCase()
     )
 
-    const isNumberFound = body.number && Person.some(
+    const isNumberFound = body.number && Persons.some(
         (person) => person.number === body.number
     )
 
@@ -114,7 +114,7 @@ app.post('/api/persons', (request, response) => {
         })
     }
 
-    const person = new Person({
+    const person = new Persons({
         name: body.name,
         number: body.number,
         id: generateId(),
