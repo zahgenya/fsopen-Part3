@@ -91,7 +91,7 @@ const generateId = async () => {
     return maxId + 1
 }
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', async (request, response) => {
     const body = request.body
 
     if (!body.name || !body.number) {
@@ -100,15 +100,15 @@ app.post('/api/persons', (request, response) => {
         })
     }
 
-    const isNameFound = body.name && Persons.some(
-        (person) => person.name && person.name?.toLowerCase() === body.name.toLowerCase()
-    )
+    const sameNamePerson = await Persons.findOne({
+        name: body.name
+    })
 
-    const isNumberFound = body.number && Persons.some(
-        (person) => person.number === body.number
-    )
+    const sameNumberPerson = await Persons.findOne({
+        number: body.number
+    })
 
-    if (isNameFound || isNumberFound || (isNameFound && isNumberFound)) {
+    if (sameNamePerson || sameNumberPerson) {
         return response.status(400).json({
             error: 'name must be unique'
         })
@@ -117,7 +117,6 @@ app.post('/api/persons', (request, response) => {
     const person = new Persons({
         name: body.name,
         number: body.number,
-        id: generateId(),
     })
 
     person.save().then(savedPerson => {
