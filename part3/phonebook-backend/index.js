@@ -2,13 +2,22 @@ const express = require('express')
 const morgan = require('morgan')
 const app = express()
 const cors = require('cors')
-const mongoose = require('mongoose')
 require('dotenv').config()
 
 const Persons = require('./models/persons')
 
 const unknownEndpoint = (request, response) => {
     response.status(404).send({ error: 'unknown endpoint' })
+}
+
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+
+    if (error.name === 'CastError') {
+        return response.status(400).send({ error: 'malformatted id' })
+    }
+
+    next(error)
 }
 
 app.use(cors())
@@ -44,7 +53,7 @@ app.get('/api/persons', (request, response) => {
         })
 })
 
-app.get('/api/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response, next) => {
     Persons.findById(request.params.id)
         .then(person => {
             if (person) {
@@ -53,10 +62,7 @@ app.get('/api/persons/:id', (request, response) => {
                 response.status(404).end()
             }
         })
-        .catch(error => {
-            console.log(error)
-            response.status(500).json({ error: 'Server error' })
-        })
+        .catch(error => next(error))
 })
 
 app.get('/info', async (request, response) => {
@@ -66,30 +72,13 @@ app.get('/info', async (request, response) => {
     ${todayDate}</p>`)
 });
 
-app.delete('/api/persons/:id', (request, response) => {
+app.delete('/api/persons/:id', (request, response, next) => {
     Persons.findByIdAndRemove(request.params.id)
         .then(result => {
-            if (result) {
-                response.status(204).end()
-            } else {
-                response.status(404).end()
-            }
+            response.status(204).end()
         })
-        .catch(error => {
-            console.log(error)
-            response.status(500).json({ error: 'Server error' })
-        })
+        .catch(error => next(error))
 })
-
-
-const generateId = async () => {
-    const maxId = await Persons.find({})
-        .sort({ id: -1 })
-        .limit(1)
-        .then(persons => persons.length > 0 ? persons[0].id : 0)
-
-    return maxId + 1
-}
 
 app.post('/api/persons', async (request, response) => {
     const body = request.body
@@ -124,7 +113,23 @@ app.post('/api/persons', async (request, response) => {
     })
 })
 
+app.put('/api/persons/:id', (request, response, next) => {
+    const body = request.body
+
+    const person = {
+        name: body.name,
+        number: body.number,
+    }
+
+    Persons.findByIdAndUpdate(request.params.id, person, { new: true })
+        .then(updatePerson => {
+            response.json(updatePerson)
+        })
+        .catch(error => next(error))
+})
+
 app.use(unknownEndpoint)
+app.use(errorHandler)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
