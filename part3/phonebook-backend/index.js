@@ -3,7 +3,7 @@ const morgan = require('morgan');
 
 const app = express();
 const cors = require('cors');
-require('dotenv').config();
+const config = require('./utils/config')
 
 const Persons = require('./models/persons');
 
@@ -126,7 +126,6 @@ app.put('/api/persons/:id', (request, response, next) => {
 app.use(unknownEndpoint);
 app.use(errorHandler);
 
-const { PORT } = process.env;
-app.listen(PORT, () => {
-  console.log(`Server runnig on port ${PORT}`);
+app.listen(config.PORT, () => {
+  console.log(`Server runnig on port ${config.PORT}`);
 });
